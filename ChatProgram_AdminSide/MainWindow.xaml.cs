@@ -180,6 +180,7 @@ namespace ChatProgram_AdminSide
                 {
                     MessageBox.Show(item.UserName + "   " + item.RemoteEndPoint);
                 }
+
                 //TESt
                 //foreach (var item in Users)
                 //{
@@ -187,8 +188,6 @@ namespace ChatProgram_AdminSide
                 //}
             });
         }
-
-
 
         //This is helper function for User Create. 
         //This Function get first string from user And If User Disconnect In 30 Second  
@@ -206,19 +205,19 @@ namespace ChatProgram_AdminSide
                     {
                         //Test
                         //MessageBox.Show($"|Test| Flag: {flag}");
-                        
+
                         // your code
-                            User user = new User();
-                            user.UserName = msg;
-                            user.RemoteEndPoint = client.Client.RemoteEndPoint.ToString();
-                            user.IsConnected = true;
+                        User user = new User();
+                        user.UserName = msg;
+                        user.RemoteEndPoint = client.Client.RemoteEndPoint.ToString();
+                        user.IsConnected = true;
 
                         //UserUC userUC = new UserUC();
                         //userUC.user = user;
                         //Users.Add(userUC);
                         //Old
                         Users.Add(user);
-                        break;
+                        return;
                     }
 
                 }
@@ -228,7 +227,7 @@ namespace ChatProgram_AdminSide
                     //This is for UI WPF TEST
                     MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
                     UserDisconnected(client);
-                    break;
+                    return;
                     //This is For Console TEST
                     //Console.WriteLine($"{item.Client.RemoteEndPoint}  disconnected");
                 }
@@ -238,7 +237,7 @@ namespace ChatProgram_AdminSide
         public void UserDisconnected(TcpClient client)
         {
             Clients.Remove(client);
-            //Old
+            //Old Original
             foreach (var item in Users)
             {
                 if (item.RemoteEndPoint == client.Client.RemoteEndPoint.ToString())
@@ -258,18 +257,7 @@ namespace ChatProgram_AdminSide
             //}
         }
 
-        //private void callbackFunc(IAsyncResult ar)
-        //{
-        //    try
-        //    {
-        //        var client = ar as TcpClient;
-        //        MessageBox.Show($"{client.Client.RemoteEndPoint} is connected");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"Error From CallBack Function: {ex.Message}");
-        //    }
-        //}
+        
 
         [Obsolete]
         public void TestFunc()
