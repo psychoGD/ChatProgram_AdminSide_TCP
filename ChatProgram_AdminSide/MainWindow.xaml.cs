@@ -43,7 +43,6 @@ namespace ChatProgram_AdminSide
         static BinaryWriter bw = null;
         static BinaryReader br = null;
         public static List<TcpClient> Clients { get; set; }
-        //public static List<User> Users { get; set; } = new List<User>();
 
         private readonly object _locker = new object();
 
@@ -79,9 +78,6 @@ namespace ChatProgram_AdminSide
 
 
         //UI Bind
-
-
-
         private string ipAdressUI;
 
         public string IpAdressUI
@@ -97,11 +93,14 @@ namespace ChatProgram_AdminSide
             get { return portUI; }
             set { portUI = value; OnPropertyChanged(); }
         }
+        private User currentUser;
 
-        //public string PortUI { get; set; }
+        public User CurrentUser
+        {
+            get { return currentUser; }
+            set { currentUser = value; OnPropertyChanged(); }
+        }
 
-
-        //public DispatcherTimer dispatcherTimer { get; set; }
         [Obsolete]
         public MainWindow()
         {
@@ -109,14 +108,17 @@ namespace ChatProgram_AdminSide
             this.DataContext = this;
             //OLD Original
             Users = new ObservableCollection<User>();
-
+            Clients = new List<TcpClient>();
             //TEST
             //Users = new ObservableCollection<UserUC>();
             Task.Run(() =>
             {
                 ConnectAcceptor();
             });
-
+            //Task.Run(() =>
+            //{
+            //    DataReaderFromEveryone();
+            //});
 
 
             //Task.Run(() =>
@@ -130,18 +132,32 @@ namespace ChatProgram_AdminSide
 
         }
 
-        public string GetHostName()
+        public void DataReaderFromEveryone()
         {
-            string hostName = Dns.GetHostName();
-            return hostName;
+            while (true)
+            {
+                foreach (var item in Clients)
+                {
+                    var stream = item.GetStream();
+                    br = new BinaryReader(stream);
+                    while (true)
+                    {
+                        try
+                        {
+                            var msg = br.ReadString();
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("Test");
+                            UserDisconnected(item);
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
-        [Obsolete]
-        public string GetIpAdress(string HostName)
-        {
-            string IP = Dns.GetHostByName(HostName).AddressList[0].ToString();
-            return IP;
-        }
+        #region User Acceptor
 
         //This function for who is connect
         [Obsolete]
@@ -159,6 +175,7 @@ namespace ChatProgram_AdminSide
             while (true)
             {
                 var client = listener.AcceptTcpClientAsync().Result;
+                //MessageBox.Show(client.Client.RemoteEndPoint.ToString());
                 Task.Run(() =>
                 {
 
@@ -204,7 +221,7 @@ namespace ChatProgram_AdminSide
                     if (!flag)
                     {
                         //Test
-                        //MessageBox.Show($"|Test| Flag: {flag}");
+                        MessageBox.Show($"|Test| Flag: {flag}");
 
                         // your code
                         User user = new User();
@@ -221,17 +238,60 @@ namespace ChatProgram_AdminSide
                     }
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                     //This is for UI WPF TEST
-                    MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
+                    //MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
                     UserDisconnected(client);
                     return;
                     //This is For Console TEST
                     //Console.WriteLine($"{item.Client.RemoteEndPoint}  disconnected");
                 }
             }
+        }
+
+
+        #endregion
+
+        #region Helper Functions
+
+        public User GetUserByRemoteEndPoint(string endPoint)
+        {
+            foreach (var user in Users)
+            {
+                if (user.RemoteEndPoint == endPoint)
+                {
+                    return user;
+                }
+            }
+            return null;
+        }
+
+        public TcpClient GetClientByEndPoint(string endPoint)
+        {
+
+            foreach (var client in Clients)
+            {
+                if (client.Client.RemoteEndPoint.ToString() == endPoint)
+                {
+                    return client;
+                }
+            }
+            return null;
+        }
+
+        public string GetHostName()
+        {
+            string hostName = Dns.GetHostName();
+            return hostName;
+        }
+
+        [Obsolete]
+        public string GetIpAdress(string HostName)
+        {
+            string IP = Dns.GetHostByName(HostName).AddressList[0].ToString();
+            return IP;
         }
 
         public void UserDisconnected(TcpClient client)
@@ -256,8 +316,8 @@ namespace ChatProgram_AdminSide
             //    }
             //}
         }
+        #endregion
 
-        
 
         [Obsolete]
         public void TestFunc()
@@ -354,6 +414,29 @@ namespace ChatProgram_AdminSide
                     });
                 });
             }
+
+        }
+
+
+        private void MainListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+
+            foreach (var item in MainListBox.Items)
+            {
+
+                var text = item as TextBlock;
+                text.Background = Brushes.Red;
+
+            }
+            //if (currentUser.IsConnected)
+            //{
+
+            //    ChatWindow chatWindow = new ChatWindow();
+            //    chatWindow.User = CurrentUser;
+            //    chatWindow.Client = GetClientByEndPoint(CurrentUser.RemoteEndPoint);
+            //    chatWindow.Show();
+                
+            //}
 
         }
     }
