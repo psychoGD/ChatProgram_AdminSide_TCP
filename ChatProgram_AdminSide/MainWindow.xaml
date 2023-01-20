@@ -7,6 +7,47 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <ListView FontSize="25" ></ListView>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="8*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Label Content="Ip Adress: " FontSize="20"></Label>
+            <Label Content="{Binding IpAdressUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
+            <Label Content="Port: " FontSize="20"></Label>
+            <Label Content="{Binding PortUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
+        </StackPanel>
+        <!--<ListBox Grid.Row="1" FontSize="25" ItemsSource="{Binding Users.UserName}"></ListBox>-->
+        <!--<ListBox >
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel></StackPanel>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>-->
+        <!--<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Users}" >
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>-->
+        <ListBox Grid.Row="1" Background="White" Name="MainListBox"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding Users}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Text="{Binding UserName}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </Window>

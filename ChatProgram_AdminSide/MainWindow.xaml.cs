@@ -15,23 +15,118 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Threading;
+using System.Collections.ObjectModel;
 
 namespace ChatProgram_AdminSide
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(name));
+            }
+        }
+
 
         static TcpListener listener = null;
         static BinaryWriter bw = null;
         static BinaryReader br = null;
         public static List<TcpClient> Clients { get; set; }
+        //public static List<User> Users { get; set; } = new List<User>();
 
+        private readonly object _locker = new object();
+
+        private ObservableCollection<User> users;
+
+        public ObservableCollection<User> Users
+        {
+            get { return users; }
+            set
+            {
+                users = value;
+                OnPropertyChanged();
+                BindingOperations.EnableCollectionSynchronization(users, _locker);
+            }
+        }
+
+        //Test
+        //private ObservableCollection<UserUC> users;
+
+        //public ObservableCollection<UserUC> Users
+        //{
+        //    get { return users; }
+        //    set
+        //    {
+        //        users = value;
+        //        OnPropertyChanged();
+        //        BindingOperations.EnableCollectionSynchronization(users, _locker);
+        //    }
+        //}
+
+
+
+
+
+        //UI Bind
+
+
+
+        private string ipAdressUI;
+
+        public string IpAdressUI
+        {
+            get { return ipAdressUI; }
+            set { ipAdressUI = value; OnPropertyChanged(); }
+        }
+
+        private string portUI;
+
+        public string PortUI
+        {
+            get { return portUI; }
+            set { portUI = value; OnPropertyChanged(); }
+        }
+
+        //public string PortUI { get; set; }
+
+
+        //public DispatcherTimer dispatcherTimer { get; set; }
+        [Obsolete]
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
+            //OLD Original
+            Users = new ObservableCollection<User>();
+
+            //TEST
+            //Users = new ObservableCollection<UserUC>();
+            Task.Run(() =>
+            {
+                ConnectAcceptor();
+            });
+
+
+
+            //Task.Run(() =>
+            //{
+
+            //    DispatcherTimer dispatcherTimer = new DispatcherTimer();
+            //    dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
+            //    dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+            //    dispatcherTimer.Start();
+            //});
 
         }
 
@@ -48,10 +143,138 @@ namespace ChatProgram_AdminSide
             return IP;
         }
 
+        //This function for who is connect
+        [Obsolete]
+        public void ConnectAcceptor()
+        {
+            Clients = new List<TcpClient>();
+            var ip = IPAddress.Parse(GetIpAdress(GetHostName()));
+            var port = 27001;
+            IpAdressUI = ip.ToString();
+            portUI = port.ToString();
+            var ep = new IPEndPoint(ip, port);
+            listener = new TcpListener(ep);
+            listener.Start();
+
+            while (true)
+            {
+                var client = listener.AcceptTcpClientAsync().Result;
+                Task.Run(() =>
+                {
+
+                    UserCreate(client);
+                    Clients.Add(client);
+                });
+                //MessageBox.Show($"{client.Client.RemoteEndPoint} is connected");
+            }
+        }
+
+        public void UserCreate(TcpClient client)
+        {
+
+            Task.Run(() =>
+            {
+                CreateUser(client);
+                //Old
+                foreach (var item in Users)
+                {
+                    MessageBox.Show(item.UserName + "   " + item.RemoteEndPoint);
+                }
+                //TESt
+                //foreach (var item in Users)
+                //{
+                //    MessageBox.Show(item.user.UserName + "   " + item.user.RemoteEndPoint);
+                //}
+            });
+        }
+
+
+
+        //This is helper function for User Create. 
+        //This Function get first string from user And If User Disconnect In 30 Second  
+        public void CreateUser(TcpClient client)
+        {
+            var stream = client.GetStream();
+            br = new BinaryReader(stream);
+            while (true)
+            {
+                try
+                {
+                    var msg = br.ReadString();
+                    var flag = msg == " " || msg == null || msg == "";
+                    if (!flag)
+                    {
+                        //Test
+                        //MessageBox.Show($"|Test| Flag: {flag}");
+                        
+                        // your code
+                            User user = new User();
+                            user.UserName = msg;
+                            user.RemoteEndPoint = client.Client.RemoteEndPoint.ToString();
+                            user.IsConnected = true;
+
+                        //UserUC userUC = new UserUC();
+                        //userUC.user = user;
+                        //Users.Add(userUC);
+                        //Old
+                        Users.Add(user);
+                        break;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+
+                    //This is for UI WPF TEST
+                    MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
+                    UserDisconnected(client);
+                    break;
+                    //This is For Console TEST
+                    //Console.WriteLine($"{item.Client.RemoteEndPoint}  disconnected");
+                }
+            }
+        }
+
+        public void UserDisconnected(TcpClient client)
+        {
+            Clients.Remove(client);
+            //Old
+            foreach (var item in Users)
+            {
+                if (item.RemoteEndPoint == client.Client.RemoteEndPoint.ToString())
+                {
+                    item.IsConnected = false;
+                }
+            }
+
+
+            //TEST
+            //foreach (var item in Users)
+            //{
+            //    if (item.user.RemoteEndPoint == client.Client.RemoteEndPoint.ToString())
+            //    {
+            //        item.user.IsConnected = false;
+            //    }
+            //}
+        }
+
+        //private void callbackFunc(IAsyncResult ar)
+        //{
+        //    try
+        //    {
+        //        var client = ar as TcpClient;
+        //        MessageBox.Show($"{client.Client.RemoteEndPoint} is connected");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Error From CallBack Function: {ex.Message}");
+        //    }
+        //}
+
         [Obsolete]
         public void TestFunc()
         {
-            
+
 
             Clients = new List<TcpClient>();
             var ip = IPAddress.Parse(GetIpAdress(GetHostName()));
