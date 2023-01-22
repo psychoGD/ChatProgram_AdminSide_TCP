@@ -1,9 +1,16 @@
-﻿using System;
+﻿using ChatProgram_ClientSide_Wpf.JsonHelper;
+using ChatProgram_ClientSide_Wpf;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,12 +20,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Threading;
-using System.Collections.ObjectModel;
 
 namespace ChatProgram_AdminSide
 {
@@ -46,9 +48,9 @@ namespace ChatProgram_AdminSide
 
         private readonly object _locker = new object();
 
-        private ObservableCollection<User> users;
+        private ObservableCollection<UserClient> users;
 
-        public ObservableCollection<User> Users
+        public ObservableCollection<UserClient> Users
         {
             get { return users; }
             set
@@ -93,9 +95,9 @@ namespace ChatProgram_AdminSide
             get { return portUI; }
             set { portUI = value; OnPropertyChanged(); }
         }
-        private User currentUser;
+        private UserClient currentUser;
 
-        public User CurrentUser
+        public UserClient CurrentUser
         {
             get { return currentUser; }
             set { currentUser = value; OnPropertyChanged(); }
@@ -107,17 +109,25 @@ namespace ChatProgram_AdminSide
             InitializeComponent();
             this.DataContext = this;
             //OLD Original
-            Users = new ObservableCollection<User>();
+            Users = new ObservableCollection<UserClient>();
             Clients = new List<TcpClient>();
             //TEST
             //Users = new ObservableCollection<UserUC>();
-            Task.Run(() =>
+            var task = Task.Run(() =>
             {
+                //MessageBox.Show("Acceptor");
                 ConnectAcceptor();
             });
+
+            //error
             //Task.Run(() =>
             //{
-            //    DataReaderFromEveryone();
+            //    //MessageBox.Show("Data Reader");
+            //    Task.Run(() =>
+            //    {
+
+            //        DataReaderFromEveryone();
+            //    });
             //});
 
 
@@ -131,31 +141,89 @@ namespace ChatProgram_AdminSide
             //});
 
         }
+        #region Datareader Test
 
-        public void DataReaderFromEveryone()
+        //public void DataReaderFromEveryone()
+        //{
+        //    Task.Run(() =>
+        //    {
+        //        while (true)
+        //        {
+        //            foreach (var item in Clients)
+        //            {
+        //                Task.Run(() =>
+        //                {
+        //                    var user = GetUserByRemoteEndPoint(item.Client.RemoteEndPoint.ToString());
+        //                    if (user == null)
+        //                    {
+        //                        var stream = item.GetStream();
+        //                        br = new BinaryReader(stream);
+        //                        while (true)
+        //                        {
+        //                            try
+        //                            {
+        //                                var msg = br.ReadString();
+        //                                MessageBox.Show(msg);
+        //                            }
+        //                            catch (Exception)
+        //                            {
+        //                                UserDisconnected(item);
+        //                                MessageBox.Show("Test");
+        //                                break;
+        //                            }
+        //                        }
+        //                    }
+        //                });
+
+        //            }
+        //        }
+        //    });
+        //}
+
+        #endregion
+
+
+        #region Network
+
+        public static string GetLocalIpAddress()
         {
-            while (true)
+            UnicastIPAddressInformation mostSuitableIp = null;
+            var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+            foreach (var network in networkInterfaces)
             {
-                foreach (var item in Clients)
+                if (network.OperationalStatus != OperationalStatus.Up)
+                    continue;
+                var properties = network.GetIPProperties();
+                if (properties.GatewayAddresses.Count == 0)
+                    continue;
+                foreach (var address in properties.UnicastAddresses)
                 {
-                    var stream = item.GetStream();
-                    br = new BinaryReader(stream);
-                    while (true)
+                    if (address.Address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+                    if (IPAddress.IsLoopback(address.Address))
+                        continue;
+                    if (!address.IsDnsEligible)
                     {
-                        try
-                        {
-                            var msg = br.ReadString();
-                        }
-                        catch (Exception)
-                        {
-                            MessageBox.Show("Test");
-                            UserDisconnected(item);
-                            break;
-                        }
+                        if (mostSuitableIp == null)
+                            mostSuitableIp = address;
+                        continue;
                     }
+                    // The best IP is the IP got from DHCP server
+                    if (address.PrefixOrigin != PrefixOrigin.Dhcp)
+                    {
+                        if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
+                            mostSuitableIp = address;
+                        continue;
+                    }
+                    return address.Address.ToString();
                 }
             }
+            return mostSuitableIp != null
+                ? mostSuitableIp.Address.ToString()
+                : "";
         }
+
+        #endregion
 
         #region User Acceptor
 
@@ -164,7 +232,7 @@ namespace ChatProgram_AdminSide
         public void ConnectAcceptor()
         {
             Clients = new List<TcpClient>();
-            var ip = IPAddress.Parse(GetIpAdress(GetHostName()));
+            var ip = IPAddress.Parse(GetLocalIpAddress());
             var port = 27001;
             IpAdressUI = ip.ToString();
             portUI = port.ToString();
@@ -175,88 +243,156 @@ namespace ChatProgram_AdminSide
             while (true)
             {
                 var client = listener.AcceptTcpClientAsync().Result;
-                //MessageBox.Show(client.Client.RemoteEndPoint.ToString());
+                MessageBox.Show(client.Client.RemoteEndPoint.ToString());
+                Clients.Add(client);
                 Task.Run(() =>
                 {
+                    //UserCreate(client);
+                    var reader = Task.Run(() =>
+                    {
+                        foreach (var item in Clients)
+                        {
+                            Task.Run(() =>
+                            {
+                                var stream = item.GetStream();
+                                br = new BinaryReader(stream);
+                                while (true)
+                                {
+                                    try
+                                    {
+                                        var msg = br.ReadString();
+                                        MessageBox.Show(msg);
+                                        try
+                                        {
+                                            var settings = new JsonSerializerSettings();
+                                            settings.Converters.Add(new IPAddressConverter());
+                                            settings.Converters.Add(new IPEndPointConverter());
+                                            settings.Formatting = Formatting.Indented;
+                                            var user = JsonConvert.DeserializeObject<User>(msg, settings);
 
-                    UserCreate(client);
-                    Clients.Add(client);
+                                            if (user != null)
+                                            {
+                                                UserClient userClient = new UserClient();
+                                                userClient.UserName = user.Username;
+                                                userClient.RemoteEndPoint = user.EndPoint.ToString();
+                                                userClient.IsConnected = true;
+                                                Users.Add(userClient);
+                                            }
+                                            else
+                                            {
+                                                var message = JsonConvert.DeserializeObject(msg);
+                                                MessageBox.Show(message.ToString());
+                                            }
+                                        }
+                                        catch (Exception)
+                                        {
+                                        }
+                                        MessageBox.Show($"CLIENT : {client.Client.RemoteEndPoint} :\n {msg}");
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show($"{item.Client.RemoteEndPoint}  disconnected");
+                                        //Clients.Remove(item);
+                                        break;
+                                    }
+                                }
+
+                            });
+                        }
+                    });
                 });
                 //MessageBox.Show($"{client.Client.RemoteEndPoint} is connected");
             }
         }
 
-        public void UserCreate(TcpClient client)
-        {
+        //private bool IsClientExist(TcpClient client)
+        //{
+        //    var ep = client.Client.RemoteEndPoint.ToString();
+        //    foreach (var user in Users)
+        //    {
+        //        if (user.RemoteEndPoint == ep)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+        //}
+        #region Old Broken Func
+        //public void UserCreate(TcpClient client)
+        //{
 
-            Task.Run(() =>
-            {
-                CreateUser(client);
-                //Old
-                foreach (var item in Users)
-                {
-                    MessageBox.Show(item.UserName + "   " + item.RemoteEndPoint);
-                }
+        //    Task.Run(() =>
+        //    {
+        //        CreateUser(client);
+        //        //Old
+        //        foreach (var item in Users)
+        //        {
+        //            MessageBox.Show(item.UserName + "   " + item.RemoteEndPoint);
+        //        }
 
-                //TESt
-                //foreach (var item in Users)
-                //{
-                //    MessageBox.Show(item.user.UserName + "   " + item.user.RemoteEndPoint);
-                //}
-            });
-        }
+        //        //TESt
+        //        //foreach (var item in Users)
+        //        //{
+        //        //    MessageBox.Show(item.user.UserName + "   " + item.user.RemoteEndPoint);
+        //        //}
+        //    });
+        //}
 
         //This is helper function for User Create. 
         //This Function get first string from user And If User Disconnect In 30 Second  
-        public void CreateUser(TcpClient client)
-        {
-            var stream = client.GetStream();
-            br = new BinaryReader(stream);
-            while (true)
-            {
-                try
-                {
-                    var msg = br.ReadString();
-                    var flag = msg == " " || msg == null || msg == "";
-                    if (!flag)
-                    {
-                        //Test
-                        MessageBox.Show($"|Test| Flag: {flag}");
+        //public void CreateUser(TcpClient client)
+        //{
+        //    var stream = client.GetStream();
+        //    br = new BinaryReader(stream);
+        //    while (true)
+        //    {
+        //        try
+        //        {
+        //            var msg = br.ReadString();
+        //            var flag = msg == " " || msg == null || msg == "";
+        //            if (!flag)
+        //            {
+        //                //Test
+        //                MessageBox.Show($"|Test| Flag: {flag}");
 
-                        // your code
-                        User user = new User();
-                        user.UserName = msg;
-                        user.RemoteEndPoint = client.Client.RemoteEndPoint.ToString();
-                        user.IsConnected = true;
+        //                // your code
+        //                User user = new User();
+        //                user.UserName = msg;
+        //                user.RemoteEndPoint = client.Client.RemoteEndPoint.ToString();
+        //                user.IsConnected = true;
 
-                        //UserUC userUC = new UserUC();
-                        //userUC.user = user;
-                        //Users.Add(userUC);
-                        //Old
-                        Users.Add(user);
-                        return;
-                    }
+        //                //UserUC userUC = new UserUC();
+        //                //userUC.user = user;
+        //                //Users.Add(userUC);
+        //                //Old
+        //                Users.Add(user);
+        //                client.Dispose();
+        //                return;
+        //            }
 
-                }
-                catch (Exception)
-                {
+        //        }
+        //        catch (Exception)
+        //        {
 
-                    //This is for UI WPF TEST
-                    //MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
-                    UserDisconnected(client);
-                    return;
-                    //This is For Console TEST
-                    //Console.WriteLine($"{item.Client.RemoteEndPoint}  disconnected");
-                }
-            }
-        }
+        //            //This is for UI WPF TEST
+        //            //MessageBox.Show($"{client.Client.RemoteEndPoint} disconnected\n{ex.Message}");
+        //            UserDisconnected(client);
+        //            return;
+        //            //This is For Console TEST
+        //            //Console.WriteLine($"{item.Client.RemoteEndPoint}  disconnected");
+        //        }
+        //    }
+        //}
+        #endregion
+
 
 
         #endregion
 
         #region Helper Functions
 
-        public User GetUserByRemoteEndPoint(string endPoint)
+        public UserClient GetUserByRemoteEndPoint(string endPoint)
         {
             foreach (var user in Users)
             {
@@ -435,9 +571,10 @@ namespace ChatProgram_AdminSide
             //    chatWindow.User = CurrentUser;
             //    chatWindow.Client = GetClientByEndPoint(CurrentUser.RemoteEndPoint);
             //    chatWindow.Show();
-                
+
             //}
 
         }
+
     }
 }

@@ -21,7 +21,7 @@ namespace ChatProgram_AdminSide
     public partial class ChatWindow : Window
     {
         public TcpClient Client{ get; set; }
-        public User User { get; set; }
+        public UserClient User { get; set; }
         public ChatWindow()
         {
             InitializeComponent();

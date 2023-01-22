@@ -1,6 +1,6 @@
 ﻿namespace ChatProgram_AdminSide
 {
-    public class User
+    public class UserClient
     {
         public string RemoteEndPoint { get; set; }
         public string UserName { get; set; }

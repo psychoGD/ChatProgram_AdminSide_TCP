@@ -42,7 +42,7 @@ namespace ChatProgram_AdminSide
             set { backGroundColor = value;OnPropertyChanged(); }
         }
 
-        public User user { get; set; }
+        public UserClient user { get; set; }
 
         public UserUC()
         {

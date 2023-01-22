@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ChatProgram_AdminSide" xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:local="clr-namespace:ChatProgram_AdminSide"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
@@ -37,7 +37,7 @@
         <ListBox Grid.Row="1" Background="White" Name="MainListBox"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding Users}" FontSize="20" 
                  SelectedItem="{Binding CurrentUser}" MouseDoubleClick="MainListBox_MouseDoubleClick">
-            
+
 
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -46,11 +46,12 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="100" />
                         </Grid.ColumnDefinitions>
-                        
+
                         <TextBlock Text="{Binding UserName}"/>
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
     </Grid>
+
 </Window>
