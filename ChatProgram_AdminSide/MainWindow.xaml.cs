@@ -109,7 +109,9 @@ namespace ChatProgram_AdminSide
         public ObservableCollection<User> UsersNew
         {
             get { return usersNew; }
-            set { usersNew = value;
+            set
+            {
+                usersNew = value;
                 OnPropertyChanged();
                 BindingOperations.EnableCollectionSynchronization(usersNew, _locker);
             }
@@ -132,10 +134,10 @@ namespace ChatProgram_AdminSide
                 ConnectAcceptor();
             });
 
-            
+
 
         }
-        
+
         #region Network
 
         public static string GetLocalIpAddress()
@@ -182,6 +184,7 @@ namespace ChatProgram_AdminSide
         {
             chatUC = new ChatUC();
             var cl = GetClientByEndPoint(CurrentUser.RemoteEndPoint);
+            chatUC.CurrentUser = cl;
             MainGrid.Children.Add(chatUC);
         }
         #region User Acceptor
@@ -234,19 +237,28 @@ namespace ChatProgram_AdminSide
                                             {
                                                 UserClient userClient = new UserClient();
                                                 userClient.UserName = user.Username;
-                                                userClient.RemoteEndPoint = user.EndPoint.ToString();
+                                                userClient.EndPoint = user.EndPoint.ToString();
+                                                userClient.RemoteEndPoint = user.RemoteEndPoint;
                                                 userClient.IsConnected = true;
                                                 Users.Add(userClient);
                                             }
                                             else
                                             {
-                                                throw new Exception();
+                                                MessageBox.Show("New Message");
+                                                var message = JsonConvert.DeserializeObject<Message>(msg, settings);
+                                                if (chatUC != null)
+                                                {
+                                                    if (message.User.EndPoint == chatUC.CurrentUser.Client.RemoteEndPoint)
+                                                    {
+                                                        chatUC.GetNewMessage(message);
+                                                    }
+                                                }
                                             }
                                         }
                                         catch (Exception ex)
                                         {
-                                            var message = JsonConvert.DeserializeObject<Message>(msg,settings);
-                                            MessageBox.Show($"From Acceptor Error: {message}\n{ex.Message}");
+
+                                            //MessageBox.Show($"From Acceptor Error: {message}\n{ex.Message}");
 
                                             //foreach (var clientSecond in Clients)
                                             //{
@@ -256,7 +268,7 @@ namespace ChatProgram_AdminSide
                                             //    }
                                             //}
                                         }
-                                        MessageBox.Show($"CLIENT : {client.Client.RemoteEndPoint} :\n {msg}");
+                                        //MessageBox.Show($"CLIENT : {client.Client.RemoteEndPoint} :\n {msg}");
 
                                     }
                                     catch (Exception ex)
@@ -543,7 +555,7 @@ namespace ChatProgram_AdminSide
         }
 
 
-        
+
 
     }
 }

@@ -85,18 +85,17 @@ namespace ChatProgram_AdminSide
             MainStack.Children.Add(messageUC);
         }
 
-        public Message CreateMessageClass(string text)
+        public Message CreateMessageClass(string text,bool FromClient)
         {
             Message message = new Message();
-            message.FromClient = false;
+            message.FromClient = FromClient;
             message.message = text;
             message.dateTime = DateTime.Now;
             return message;
         }
-
         public void GetNewMessage(Message message)
         {
-            var msg = CreateMessageClass(message.message);
+            var msg = CreateMessageClass(message.message,true);
             AddMessageToUI(msg);
         }
 
@@ -108,7 +107,7 @@ namespace ChatProgram_AdminSide
                 var stream = CurrentUser.GetStream();
                 var bw = new BinaryWriter(stream);
                 bw.Write(text);
-                var msg = CreateMessageClass(text);
+                var msg = CreateMessageClass(text,false);
                 AddMessageToUI(msg);
             }
             catch (Exception ex)

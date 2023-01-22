@@ -12,6 +12,8 @@ namespace ChatProgram_AdminSide
     {
         public string Username { get; set; }
         public IPEndPoint EndPoint { get; set; }
+        public string RemoteEndPoint { get; set; }
+
         //New 
         //public TcpClient client { get; set; }
     }
