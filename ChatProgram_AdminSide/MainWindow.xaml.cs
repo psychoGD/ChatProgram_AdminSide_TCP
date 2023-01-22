@@ -103,6 +103,19 @@ namespace ChatProgram_AdminSide
             set { currentUser = value; OnPropertyChanged(); }
         }
 
+        //New Test
+        private ObservableCollection<User> usersNew;
+
+        public ObservableCollection<User> UsersNew
+        {
+            get { return usersNew; }
+            set { usersNew = value;
+                OnPropertyChanged();
+                BindingOperations.EnableCollectionSynchronization(usersNew, _locker);
+            }
+        }
+
+
         [Obsolete]
         public MainWindow()
         {
@@ -119,70 +132,10 @@ namespace ChatProgram_AdminSide
                 ConnectAcceptor();
             });
 
-            //error
-            //Task.Run(() =>
-            //{
-            //    //MessageBox.Show("Data Reader");
-            //    Task.Run(() =>
-            //    {
-
-            //        DataReaderFromEveryone();
-            //    });
-            //});
-
-
-            //Task.Run(() =>
-            //{
-
-            //    DispatcherTimer dispatcherTimer = new DispatcherTimer();
-            //    dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
-            //    dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
-            //    dispatcherTimer.Start();
-            //});
+            
 
         }
-        #region Datareader Test
-
-        //public void DataReaderFromEveryone()
-        //{
-        //    Task.Run(() =>
-        //    {
-        //        while (true)
-        //        {
-        //            foreach (var item in Clients)
-        //            {
-        //                Task.Run(() =>
-        //                {
-        //                    var user = GetUserByRemoteEndPoint(item.Client.RemoteEndPoint.ToString());
-        //                    if (user == null)
-        //                    {
-        //                        var stream = item.GetStream();
-        //                        br = new BinaryReader(stream);
-        //                        while (true)
-        //                        {
-        //                            try
-        //                            {
-        //                                var msg = br.ReadString();
-        //                                MessageBox.Show(msg);
-        //                            }
-        //                            catch (Exception)
-        //                            {
-        //                                UserDisconnected(item);
-        //                                MessageBox.Show("Test");
-        //                                break;
-        //                            }
-        //                        }
-        //                    }
-        //                });
-
-        //            }
-        //        }
-        //    });
-        //}
-
-        #endregion
-
-
+        
         #region Network
 
         public static string GetLocalIpAddress()
@@ -224,10 +177,17 @@ namespace ChatProgram_AdminSide
         }
 
         #endregion
-
+        public ChatUC chatUC { get; set; }
+        private void MainListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            chatUC = new ChatUC();
+            var cl = GetClientByEndPoint(CurrentUser.RemoteEndPoint);
+            MainGrid.Children.Add(chatUC);
+        }
         #region User Acceptor
 
         //This function for who is connect
+        public JsonSerializerSettings settings { get; set; }
         [Obsolete]
         public void ConnectAcceptor()
         {
@@ -261,16 +221,16 @@ namespace ChatProgram_AdminSide
                                     try
                                     {
                                         var msg = br.ReadString();
-                                        MessageBox.Show(msg);
                                         try
                                         {
-                                            var settings = new JsonSerializerSettings();
+                                            settings = new JsonSerializerSettings();
                                             settings.Converters.Add(new IPAddressConverter());
                                             settings.Converters.Add(new IPEndPointConverter());
                                             settings.Formatting = Formatting.Indented;
+
                                             var user = JsonConvert.DeserializeObject<User>(msg, settings);
 
-                                            if (user != null)
+                                            if (user != null && user.EndPoint != null)
                                             {
                                                 UserClient userClient = new UserClient();
                                                 userClient.UserName = user.Username;
@@ -280,12 +240,21 @@ namespace ChatProgram_AdminSide
                                             }
                                             else
                                             {
-                                                var message = JsonConvert.DeserializeObject(msg);
-                                                MessageBox.Show(message.ToString());
+                                                throw new Exception();
                                             }
                                         }
-                                        catch (Exception)
+                                        catch (Exception ex)
                                         {
+                                            var message = JsonConvert.DeserializeObject<Message>(msg,settings);
+                                            MessageBox.Show($"From Acceptor Error: {message}\n{ex.Message}");
+
+                                            //foreach (var clientSecond in Clients)
+                                            //{
+                                            //    if (message.User.EndPoint == clientSecond.Client.RemoteEndPoint)
+                                            //    {
+
+                                            //    }
+                                            //}
                                         }
                                         MessageBox.Show($"CLIENT : {client.Client.RemoteEndPoint} :\n {msg}");
 
@@ -293,7 +262,7 @@ namespace ChatProgram_AdminSide
                                     catch (Exception ex)
                                     {
                                         MessageBox.Show($"{item.Client.RemoteEndPoint}  disconnected");
-                                        //Clients.Remove(item);
+                                        Clients.Remove(item);
                                         break;
                                     }
                                 }
@@ -319,6 +288,28 @@ namespace ChatProgram_AdminSide
         //    return false;
         //}
         #region Old Broken Func
+
+        //error
+        //Task.Run(() =>
+        //{
+        //    //MessageBox.Show("Data Reader");
+        //    Task.Run(() =>
+        //    {
+
+        //        DataReaderFromEveryone();
+        //    });
+        //});
+
+
+        //Task.Run(() =>
+        //{
+
+        //    DispatcherTimer dispatcherTimer = new DispatcherTimer();
+        //    dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
+        //    dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+        //    dispatcherTimer.Start();
+        //});
+
         //public void UserCreate(TcpClient client)
         //{
 
@@ -385,8 +376,6 @@ namespace ChatProgram_AdminSide
         //    }
         //}
         #endregion
-
-
 
         #endregion
 
@@ -554,27 +543,7 @@ namespace ChatProgram_AdminSide
         }
 
 
-        private void MainListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-
-            foreach (var item in MainListBox.Items)
-            {
-
-                var text = item as TextBlock;
-                text.Background = Brushes.Red;
-
-            }
-            //if (currentUser.IsConnected)
-            //{
-
-            //    ChatWindow chatWindow = new ChatWindow();
-            //    chatWindow.User = CurrentUser;
-            //    chatWindow.Client = GetClientByEndPoint(CurrentUser.RemoteEndPoint);
-            //    chatWindow.Show();
-
-            //}
-
-        }
+        
 
     }
 }

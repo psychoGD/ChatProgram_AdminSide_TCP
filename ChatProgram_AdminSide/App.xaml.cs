@@ -13,5 +13,6 @@ namespace ChatProgram_AdminSide
     /// </summary>
     public partial class App : Application
     {
+
     }
 }

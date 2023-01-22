@@ -6,26 +6,27 @@
         xmlns:local="clr-namespace:ChatProgram_AdminSide"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition></RowDefinition>
-            <RowDefinition Height="8*"></RowDefinition>
-        </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal">
-            <Label Content="Ip Adress: " FontSize="20"></Label>
-            <Label Content="{Binding IpAdressUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
-            <Label Content="Port: " FontSize="20"></Label>
-            <Label Content="{Binding PortUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
-        </StackPanel>
-        <!--<ListBox Grid.Row="1" FontSize="25" ItemsSource="{Binding Users.UserName}"></ListBox>-->
-        <!--<ListBox >
+    <Grid x:Name="MainGrid">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition></RowDefinition>
+                <RowDefinition Height="8*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Ip Adress: " FontSize="20"></Label>
+                <Label Content="{Binding IpAdressUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
+                <Label Content="Port: " FontSize="20"></Label>
+                <Label Content="{Binding PortUI,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" FontSize="20"></Label>
+            </StackPanel>
+            <!--<ListBox Grid.Row="1" FontSize="25" ItemsSource="{Binding Users.UserName}"></ListBox>-->
+            <!--<ListBox >
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel></StackPanel>
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
         </ListBox>-->
-        <!--<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <!--<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Users}" >
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -34,24 +35,25 @@
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
         </ScrollViewer>-->
-        <ListBox Grid.Row="1" Background="White" Name="MainListBox"
+            <ListBox Grid.Row="1" Background="White" Name="MainListBox"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding Users}" FontSize="20" 
                  SelectedItem="{Binding CurrentUser}" MouseDoubleClick="MainListBox_MouseDoubleClick">
 
 
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="0,2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="100" />
-                        </Grid.ColumnDefinitions>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="{Binding UserName}"/>
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                            <TextBlock Text="{Binding UserName}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
     </Grid>
-
 </Window>
