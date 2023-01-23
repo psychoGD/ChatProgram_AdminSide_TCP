@@ -65,27 +65,30 @@ namespace ChatProgram_AdminSide
         }
         public void AddMessageToUI(Message message)
         {
-            MessageUC messageUC = new MessageUC();
-            string bgColor = "";
-            if (!message.FromClient)
+            Application.Current.Dispatcher.Invoke((Action)delegate
             {
-                bgColor = "LightBlue";
-                messageUC.HorizontalAlignment = HorizontalAlignment.Right;
-            }
-            else
-            {
-                bgColor = "LightGray";
-                string usernameColor = "orange";
-                messageUC.UsernameColor = usernameColor;
-                messageUC.HorizontalAlignment = HorizontalAlignment.Left;
-            }
-            messageUC.BackGroundColor = bgColor;
-            messageUC.ShortTime = message.dateTime.ToShortTimeString();
-            messageUC.message = message;
-            MainStack.Children.Add(messageUC);
+                MessageUC messageUC = new MessageUC();
+                string bgColor = "";
+                if (!message.FromClient)
+                {
+                    bgColor = "LightBlue";
+                    messageUC.HorizontalAlignment = HorizontalAlignment.Right;
+                }
+                else
+                {
+                    bgColor = "LightGray";
+                    string usernameColor = "orange";
+                    messageUC.UsernameColor = usernameColor;
+                    messageUC.HorizontalAlignment = HorizontalAlignment.Left;
+                }
+                messageUC.BackGroundColor = bgColor;
+                messageUC.ShortTime = message.dateTime.ToShortTimeString();
+                messageUC.message = message;
+                MainStack.Children.Add(messageUC);
+            });
         }
 
-        public Message CreateMessageClass(string text,bool FromClient)
+        public Message CreateMessageClass(string text, bool FromClient)
         {
             Message message = new Message();
             message.FromClient = FromClient;
@@ -95,7 +98,7 @@ namespace ChatProgram_AdminSide
         }
         public void GetNewMessage(Message message)
         {
-            var msg = CreateMessageClass(message.message,true);
+            var msg = CreateMessageClass(message.message, true);
             AddMessageToUI(msg);
         }
 
@@ -107,7 +110,7 @@ namespace ChatProgram_AdminSide
                 var stream = CurrentUser.GetStream();
                 var bw = new BinaryWriter(stream);
                 bw.Write(text);
-                var msg = CreateMessageClass(text,false);
+                var msg = CreateMessageClass(text, false);
                 AddMessageToUI(msg);
             }
             catch (Exception ex)
