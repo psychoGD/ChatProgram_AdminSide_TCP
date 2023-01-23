@@ -238,18 +238,19 @@ namespace ChatProgram_AdminSide
                                                 UserClient userClient = new UserClient();
                                                 userClient.UserName = user.Username;
                                                 userClient.EndPoint = user.EndPoint.ToString();
-                                                userClient.RemoteEndPoint = user.RemoteEndPoint;
+                                                userClient.RemoteEndPoint = item.Client.RemoteEndPoint.ToString();
                                                 userClient.IsConnected = true;
                                                 Users.Add(userClient);
                                             }
                                             else
                                             {
-                                                MessageBox.Show("New Message");
                                                 var message = JsonConvert.DeserializeObject<Message>(msg, settings);
+                                                message.User.RemoteEndPoint = item.Client.RemoteEndPoint.ToString();
                                                 if (chatUC != null)
                                                 {
-                                                    if (message.User.EndPoint == chatUC.CurrentUser.Client.RemoteEndPoint)
+                                                    if (message.User.RemoteEndPoint == chatUC.CurrentUser.Client.RemoteEndPoint.ToString())
                                                     {
+                                                        //MessageBox.Show("New Message");
                                                         chatUC.GetNewMessage(message);
                                                     }
                                                 }
@@ -257,7 +258,7 @@ namespace ChatProgram_AdminSide
                                         }
                                         catch (Exception ex)
                                         {
-
+                                            MessageBox.Show("Error In Main Catch Connector" + ex.Message);
                                             //MessageBox.Show($"From Acceptor Error: {message}\n{ex.Message}");
 
                                             //foreach (var clientSecond in Clients)
